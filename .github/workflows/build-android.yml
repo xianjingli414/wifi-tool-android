@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -30,21 +30,8 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     
-    - name: Accept Android SDK Licenses
-      run: |
-        mkdir -p $ANDROID_HOME/licenses
-        echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > $ANDROID_HOME/licenses/android-sdk-license
-        echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6481e" > $ANDROID_HOME/licenses/android-sdk-license
-        echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_HOME/licenses/android-sdk-license
-        echo -e "\n491a1d8c218076ff8c9139fd4854ef5c8308c85" > $ANDROID_HOME/licenses/android-sdk-license
-        echo -e "\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
-        echo -e "\n869579757292342396489007dfdcec84e587f0f6" > $ANDROID_HOME/licenses/android-sdk-license
-    
-    - name: Install Android SDK components
-      run: |
-        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-      env:
-        ANDROID_HOME: /usr/local/lib/android/sdk
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
     
     - name: Create Briefcase project
       run: python -m briefcase create android
@@ -59,5 +46,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: wifi-tool-android-apk
-        path: build/wifi_tool_android/android/gradle/APP_NAME/*.apk
+        path: build/**/*.apk
         if-no-files-found: error
