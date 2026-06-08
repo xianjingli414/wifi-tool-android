@@ -84,3 +84,5 @@ briefcase run android -d
 ---
 
 *兼容华为、小米、OPPO、vivo 等 Android 8.0+ 设备*
+
+*Last build trigger: 2026-06-09 04:05:22.181229*
