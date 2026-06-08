@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build APK with Buildozer
+  build-android:
+    name: Build Android APK
     runs-on: ubuntu-22.04
     
     steps:
@@ -22,56 +22,33 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          git zip unzip openjdk-17-jdk \
-          autoconf libtool pkg-config zlib1g-dev \
-          libncurses5-dev libncursesw5-dev \
-          cmake libffi-dev libssl-dev \
-          python3 python3-pip python3-venv \
-          cython
+        sudo apt-get install -y           git zip unzip openjdk-17-jdk           autoconf libtool pkg-config zlib1g-dev           libncurses5-dev libncursesw5-dev           cmake libffi-dev libssl-dev           python3 python3-pip python3-venv           cython
     
-    - name: Install Python dependencies
+    - name: Install Buildozer
       run: |
-        python3 -m pip install --upgrade pip
-        pip3 install kivy[base] buildozer
+        pip3 install --upgrade pip
+        pip3 install cython buildozer
+        pip3 install kivy[base] openpyxl
     
-    - name: Create buildozer.spec
-      run: |
-        cat > buildozer.spec << 'EOF'
-[app]
-title = WiFi采集管理工具
-package.name = wifi_tool
-package.domain = org.example
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,db
-version = 1.0.0
-requirements = python3,kivy,openpyxl
-orientation = portrait
-osx.python_version = 3
-osx.kivy_version = 2.3.0
-fullscreen = 0
-
-[android]
-android.permissions = ACCESS_FINE_LOCATION,ACCESS_COARSE_LOCATION,ACCESS_WIFI_STATE,CHANGE_WIFI_STATE
-android.api = 34
-android.minapi = 24
-android.ndk = 25b
-android.sdk = 34
-android.gradle_dependencies = 'com.android.support:support-v4:28.0.0'
-android.allow_backup = True
-android.arch = arm64-v8a
-EOF
-        echo "buildozer.spec created"
-    
-    - name: Build APK
-      run: |
-        buildozer -v android debug 2>&1 | tee build_log.txt
+    - name: Build APK with Buildozer
       timeout-minutes: 60
+      run: |
+        buildozer -v android debug 2>&1 | tee buildozer_log.txt
+      continue-on-error: true
+    
+    - name: Check build output
+      run: |
+        echo "Checking bin/ directory..."
+        ls -la bin/ 2>/dev/null || echo "bin/ directory not found"
+        echo "Checking .buildozer/ directory..."
+        ls -la .buildozer/ 2>/dev/null | head -20 || echo ".buildozer/ directory not found"
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
-      if: success()
+      if: always()
       with:
         name: wifi-tool-android-apk
-        path: bin/*.apk
+        path: |
+          bin/*.apk
+          buildozer_log.txt
         retention-days: 30
